@@ -16,6 +16,8 @@ const createScene = () => {
         scene.activeCamera.alpha = 3*Math.PI/4;
         scene.activeCamera.beta = Math.PI/3;
     });
+
+    scene.clearColor = new BABYLON.Color3(1,1,1); //背景透過のコード
     return scene;
 }
 const scene = createScene(); //Call the createScene function
