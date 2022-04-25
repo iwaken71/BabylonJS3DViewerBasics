@@ -13,11 +13,13 @@ const  createScene = () => {
     // var currentSkybox = scene.createDefaultSkybox(hdrTexture, true);
    // const ground = BABYLON.MeshBuilder.CreateGround("ground", options, scene); 
     const camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
+    //var ground = BABYLON.Mesh.CreateGround("ground1", 10,10, 1,scene);
     camera.attachControl(canvas, true);
     BABYLON.SceneLoader.ImportMesh("","./assets/", "chair.glb", scene, function (meshes, particleSystems, skeletons) {
         scene.createDefaultCameraOrLight(true, true, true);
-        var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/environment.env", scene);
+        var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/hdri_4k.env", scene);
         scene.environmentTexture = hdrTexture;
+        scene.createDefaultSkybox(hdrTexture, true, 10000);
         scene.activeCamera.alpha = 3*Math.PI/4;
         scene.activeCamera.beta = Math.PI/3;
         scene.clearColor = new BABYLON.Color3(1,1,1);
@@ -29,6 +31,10 @@ const  createScene = () => {
             // scene.getMaterialByUniqueID("WorkChair_Fabric_MT").wireframe = on;
             // scene.getMaterialByName("WorkChair_Main_MT").wireframe = on;
         });
+        scene.activeCamera.panningSensibility = 5000;
+        scene.activeCamera.lowerRadiusLimit = 0.1;
+        scene.activeCamera.upperRadiusLimit = 20;
+        scene.activeCamera.pinchDeltaPercentage = 0.001;
         
     });
 
