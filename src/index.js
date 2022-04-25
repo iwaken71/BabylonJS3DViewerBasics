@@ -10,14 +10,20 @@ const createScene = () => {
     const scene = new BABYLON.Scene(engine);
     // var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("./assets/environment.dds", scene);
     // var currentSkybox = scene.createDefaultSkybox(hdrTexture, true);
-    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 0));
+    const camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
+    camera.attachControl(canvas, true);
     BABYLON.SceneLoader.Append("assets/", "chair.glb", scene, function (scene) {
         scene.createDefaultCameraOrLight(true, true, true);
+        var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/environment.env", scene);
+        scene.environmentTexture = hdrTexture;
         scene.activeCamera.alpha = 3*Math.PI/4;
         scene.activeCamera.beta = Math.PI/3;
+        scene.clearColor = new BABYLON.Color3(1,1,1);
+        camera.speed = 0.4204;
+        camera.lowerRadiusLimit = 0.0210;
     });
 
-    scene.clearColor = new BABYLON.Color3(1,1,1); //背景透過のコード
+    
     return scene;
 }
 const scene = createScene(); //Call the createScene function
