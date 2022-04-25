@@ -19,15 +19,27 @@ const  createScene = () => {
         scene.createDefaultCameraOrLight(true, true, true);
         var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/hdri_4k.env", scene);
         scene.environmentTexture = hdrTexture;
-        scene.createDefaultSkybox(hdrTexture, true, 10000);
+        // scene.createDefaultSkybox(hdrTexture, true, 1000);
         scene.activeCamera.alpha = 3*Math.PI/4;
         scene.activeCamera.beta = Math.PI/3;
         scene.clearColor = new BABYLON.Color3(1,1,1);
         camera.speed = 0.4204;
         camera.lowerRadiusLimit = 0.0210;
+
+        var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
+        var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+        skyboxMaterial.backFaceCulling = false;
+        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/hdri_4k.env", scene);
+        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+
         addUI(scene,(on)=>{
-            console.log(on);
-            meshes[0].material.wireframe = on;
+            if(on){
+                skybox.material = null;
+            }else{
+                skybox.material = skyboxMaterial;
+            }
             // scene.getMaterialByUniqueID("WorkChair_Fabric_MT").wireframe = on;
             // scene.getMaterialByName("WorkChair_Main_MT").wireframe = on;
         });
@@ -35,7 +47,9 @@ const  createScene = () => {
         scene.activeCamera.lowerRadiusLimit = 0.1;
         scene.activeCamera.upperRadiusLimit = 20;
         scene.activeCamera.pinchDeltaPercentage = 0.001;
-        
+
+
+
     });
 
    
@@ -75,15 +89,15 @@ function addUI(scene,check){
         scene.clearColor = value;
     });
 
-    // var checkbox = new GUI.Checkbox();
-    // checkbox.width = "20px";
-    // checkbox.height = "20px";
-    // checkbox.isChecked = true;
-    // checkbox.color = "green";
-    // checkbox.onIsCheckedChangedObservable.add(function(value) {
-    //     check(value);
-    // });
-    // panel.addControl(checkbox);
+    var checkbox = new GUI.Checkbox();
+    checkbox.width = "20px";
+    checkbox.height = "20px";
+    checkbox.isChecked = true;
+    checkbox.color = "green";
+    checkbox.onIsCheckedChangedObservable.add(function(value) {
+        check(value);
+    });
+    panel.addControl(checkbox);
 
     panel.addControl(picker);     
 } 
