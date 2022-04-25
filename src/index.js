@@ -13,7 +13,8 @@ const createScene = () => {
     const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 0));
     BABYLON.SceneLoader.Append("assets/", "chair.glb", scene, function (scene) {
         scene.createDefaultCameraOrLight(true, true, true);
-        scene.activeCamera.alpha += 3*Math.PI/2;
+        scene.activeCamera.alpha = 3*Math.PI/4;
+        scene.activeCamera.beta = Math.PI/3;
     });
     return scene;
 }
