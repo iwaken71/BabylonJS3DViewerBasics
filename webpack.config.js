@@ -1,5 +1,4 @@
 const path = require('path');
-const webpack = require('webpack');
 const CopyPlugin = require("copy-webpack-plugin");
 module.exports = {
     // モード値を production に設定すると最適化された状態で、
