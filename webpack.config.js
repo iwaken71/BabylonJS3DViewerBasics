@@ -1,7 +1,6 @@
 const path = require('path');
+const webpack = require('webpack');
 const CopyPlugin = require("copy-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-
 module.exports = {
     // モード値を production に設定すると最適化された状態で、
     // development に設定するとソースマップ有効でJSファイルが出力される
@@ -19,8 +18,10 @@ module.exports = {
     },
 
     plugins: [
-        new CopyPlugin([
-            { from: 'src/index.html' },
-        ])
-    ],
+        new CopyPlugin({
+          patterns: [
+            { from: "public", to: "." },
+          ],
+        }),
+      ],
 };
