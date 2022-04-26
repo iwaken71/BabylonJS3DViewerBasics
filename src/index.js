@@ -5,99 +5,117 @@ import 'babylonjs-loaders';
 import 'babylonjs-inspector';
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
-let pickedPoint,distCameraTargetPosition,currentCameraTargetPosition,currentCameraRadius,distCameraRadius,zoomMove;
+let pickedPoint,distCameraTargetPosition,currentCameraTargetPosition;
+
+const config = {
+    distCameraRadius: 0.15
+}
+
+class CameraRediusController {
+    constructor(currentCameraRadius,speed = 4) {
+      this.distCameraRadius = currentCameraRadius;
+      this.currentCameraRadius = currentCameraRadius;
+      this.speed = speed
+      this.zoomMove = false;
+    }
+
+    beginMove(distCameraRadius){
+        this.zoomMove = true;
+        this.distCameraRadius = distCameraRadius;
+    }
+
+    endMove(){
+        this.zoomMove = false;
+    }
+    updateParameterAtFrame(deltaTime){
+        if(this.zoomMove){
+            if(Math.abs(this.currentCameraRadius-this.distCameraRadius) <= 0.0001){
+                this.currentCameraRadius = this.distCameraRadius;
+                this.zoomMove = false;
+            }else{
+                this.currentCameraRadius = BABYLON.Scalar.Lerp(this.currentCameraRadius,this.distCameraRadius,deltaTime*this.speed);
+            }
+        }
+    }
+}
+class CameraTargetController {
+    constructor(currentCameraTargetPosition,speed = 5) {
+        this.distCameraTargetPosition = currentCameraTargetPosition;
+        this.currentCameraTargetPosition = currentCameraTargetPosition;
+        this.speed = speed
+    }
+
+    initializeTargetPosition(targetPosition){
+        this.distCameraTargetPosition = targetPosition;
+        this.currentCameraTargetPosition = targetPosition;
+    }
+
+    beginMove(distCameraTargetPosition){
+        this.distCameraTargetPosition = distCameraTargetPosition;
+    }
+
+    updateParameterAtFrame(deltaTime){
+        if(BABYLON.Vector3.DistanceSquared(this.currentCameraTargetPosition,this.distCameraTargetPosition) <= 0.00000001){
+            this.currentCameraTargetPosition = this.distCameraTargetPosition;
+        }else{
+            this.currentCameraTargetPosition = BABYLON.Vector3.Lerp(this.currentCameraTargetPosition,this.distCameraTargetPosition,deltaTime*this.speed);
+        }
+    }
+}
+
 // Add your code here matching the playground format
-const  createScene = () => {
+const createScene = () => {
     const scene = new BABYLON.Scene(engine);
-    scene.collisionsEnabled = true;
-    // var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("./assets/environment.dds", scene);
-    // var currentSkybox = scene.createDefaultSkybox(hdrTexture, true);
-   // const ground = BABYLON.MeshBuilder.CreateGround("ground", options, scene); 
     let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
-    currentCameraTargetPosition = camera.target;
-    distCameraTargetPosition = camera.target;
-    zoomMove = false;
-    //var ground = BABYLON.Mesh.CreateGround("ground1", 10,10, 1,scene);
+    let cameraRediusController = new CameraRediusController(camera.radius);
+    let cameraTargetController = new CameraTargetController(camera.target);
+
+    // currentCameraTargetPosition = camera.target;
+    // distCameraTargetPosition = camera.target;
     camera.attachControl(canvas, true);
+    setUpEnvironment(scene);
+
     BABYLON.SceneLoader.ImportMesh("","./assets/", "chair.glb", scene, function (meshes, particleSystems, skeletons) {
-        scene.createDefaultCameraOrLight(true, true, true);
-        var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/hdri_4k.env", scene);
-        scene.environmentTexture = hdrTexture;
-        // scene.createDefaultSkybox(hdrTexture, true, 1000);
-        camera = scene.activeCamera;
-        camera.alpha = 3*Math.PI/4;
-        camera.beta = Math.PI/3;
-        scene.clearColor = new BABYLON.Color3(221/255, 221/255, 221/255);
-        camera.speed = 0.4204;
-        camera.lowerRadiusLimit = 0.0210;
-        currentCameraTargetPosition = camera.target;
-        distCameraTargetPosition = camera.target;
-        currentCameraRadius = camera.radius;
-        distCameraRadius = camera.radius;
 
-        var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
-        var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
-        skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/hdri_4k.env", scene);
-        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-        console.log(meshes[1].material);
-        // addUI(scene,(on)=>{
-        //     // meshes[1].material.wireframe = !on;
-        //     meshes[1].material.wireframe = !on;
-        //     meshes[2].material.wireframe = !on;
-        //     if(on){
-        //        // skybox.material = null;
-         
-        //     }else{
-        //        // skybox.material = skyboxMaterial;
-        //     }
-        //     // scene.getMaterialByUniqueID("WorkChair_Fabric_MT").wireframe = on;
-        //     // scene.getMaterialByName("WorkChair_Main_MT").wireframe = on;
-        // });
-        camera.panningSensibility = 5000;
-        camera.lowerRadiusLimit = 0.1;
-        camera.upperRadiusLimit = 20;
-        camera.pinchDeltaPercentage = 0.001;
-        camera.wheelDeltaPercentage = 0.01;
+        camera = setUpCameraSetting(scene);
+        cameraTargetController.initializeTargetPosition(camera.target);
 
-
-        // var pipeline = new BABYLON.DefaultRenderingPipeline(
-        //     "defaultPipeline", // The name of the pipeline
-        //     true, // Do you want the pipeline to use HDR texture?
-        //     scene, // The scene instance
-        //     [camera2] // The list of cameras to be attached to
-        // );
-        // pipeline.depthOfFieldEnabled = true;
-        // pipeline.bloomEnabled = true;
+        createSkeybox(scene);
+        addUI(scene,(on)=>onCheckbox(on,meshes));
         const action1 =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
-
-            console.log("double click");
-            distCameraTargetPosition = pickedPoint;
-            zoomMove = true;
-            distCameraRadius = 0.15;
-
+            // distCameraTargetPosition = pickedPoint;
+            cameraTargetController.beginMove(pickedPoint);
+            cameraRediusController.beginMove(config.distCameraRadius);
         });
-        meshes[1].actionManager = new BABYLON.ActionManager(scene);
-        meshes[1].actionManager.registerAction(action1);
-        meshes[2].actionManager = new BABYLON.ActionManager(scene);
-        meshes[2].actionManager.registerAction(action1);
-        
-
+        meshes.forEach(mesh =>{
+            if(mesh){
+                mesh.actionManager = new BABYLON.ActionManager(scene);
+                mesh.actionManager.registerAction(action1);
+            }
+        });
+    
     });
 
     scene.registerBeforeRender(function () {
         update(scene,camera);
+        const deltaTime = engine.getDeltaTime() / 1000;
+        cameraRediusController.updateParameterAtFrame(deltaTime);
+        cameraTargetController.updateParameterAtFrame(deltaTime);
+        if(cameraRediusController.zoomMove){
+            camera.radius = cameraRediusController.currentCameraRadius;
+           
+        }else{
+            cameraRediusController.currentCameraRadius = camera.radius;
+        }
+        camera.target = cameraTargetController.currentCameraTargetPosition;
     });
 
     scene.onPointerDown  = function (event, pickResult){
-        zoomMove = false;
+        cameraRediusController.endMove();
     }
     scene.onPointerMove  = function (event, pickResult){
         pickedPoint = pickResult.pickedPoint;
     }
-
 
    
 
@@ -105,41 +123,88 @@ const  createScene = () => {
 }
 const scene = createScene(); //Call the createScene function
 scene.debugLayer.show();
-
-function update(scene,camera){
-    const deltaTime = engine.getDeltaTime() / 1000;
-    //console.log(currentCameraTargetPosition)
-    console.log(distCameraTargetPosition)
-    if(BABYLON.Vector3.DistanceSquared(currentCameraTargetPosition,distCameraTargetPosition) <= 0.00000001){
-        currentCameraTargetPosition = distCameraTargetPosition;
-        camera.target = currentCameraTargetPosition;
-    }else{
-        currentCameraTargetPosition = BABYLON.Vector3.Lerp(currentCameraTargetPosition,distCameraTargetPosition,deltaTime*5);
-        camera.target = currentCameraTargetPosition;
-    }
-    console.log(zoomMove);
-    if(zoomMove){
-        if(Math.abs(currentCameraRadius-distCameraRadius) <= 0.0001){
-            currentCameraRadius = distCameraRadius;
-            camera.radius = currentCameraRadius;
-            zoomMove = false;
-        }else{
-            currentCameraRadius = BABYLON.Scalar.Lerp(currentCameraRadius,distCameraRadius,deltaTime*4);
-            camera.radius = currentCameraRadius;
-        }
-    }else{
-        currentCameraRadius = camera.radius;
-    }
-}
-// Register a render loop to repeatedly render the scene
 engine.runRenderLoop(function () {
     scene.render();
 });
-
 // Watch for browser/canvas resize events
 window.addEventListener("resize", function () {
     engine.resize();
 });
+
+function update(scene,camera){
+    const deltaTime = engine.getDeltaTime() / 1000;
+    // if(BABYLON.Vector3.DistanceSquared(currentCameraTargetPosition,distCameraTargetPosition) <= 0.00000001){
+    //     currentCameraTargetPosition = distCameraTargetPosition;
+    //     camera.target = currentCameraTargetPosition;
+    // }else{
+    //     currentCameraTargetPosition = BABYLON.Vector3.Lerp(currentCameraTargetPosition,distCameraTargetPosition,deltaTime*5);
+    //     camera.target = currentCameraTargetPosition;
+    // }
+}
+
+function createSkeybox(scene){
+    var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
+    var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/hdri_4k.env", scene);
+    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    skybox.material = skyboxMaterial;
+}
+
+function onCheckbox(enabled,meshes){
+    meshes[1].material.wireframe = !enabled;
+
+    meshes.forEach(mesh => {
+        console.log(mesh.material);
+        if(mesh.material){
+            // mesh.material.wireframe = !on;
+            // mesh.material.wireframe = !on;
+        }
+    });
+
+    if(enabled){
+       // skybox.material = null;
+ 
+    }else{
+       // skybox.material = skyboxMaterial;
+    }
+}
+
+function setUpEnvironment(scene){
+    var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/hdri_4k.env", scene);
+    scene.environmentTexture = hdrTexture;
+
+}
+function setUpPipeline(camera){
+
+    var pipeline = new BABYLON.DefaultRenderingPipeline(
+        "defaultPipeline", // The name of the pipeline
+        true, // Do you want the pipeline to use HDR texture?
+        scene, // The scene instance
+        [camera] // The list of cameras to be attached to
+    );
+    pipeline.depthOfFieldEnabled = true;
+    pipeline.bloomEnabled = true;
+}
+
+function setUpCameraSetting(scene){
+    scene.createDefaultCamera(true, true, true);
+    let camera = scene.activeCamera;
+    camera.alpha = 3*Math.PI/4;
+    camera.beta = Math.PI/3;
+    scene.clearColor = new BABYLON.Color3(221/255, 221/255, 221/255);
+    camera.speed = 0.4204;
+    camera.lowerRadiusLimit = 0.0210;
+    camera.panningSensibility = 5000;
+    camera.lowerRadiusLimit = 0.1;
+    camera.upperRadiusLimit = 20;
+    camera.pinchDeltaPercentage = 0.001;
+    camera.wheelDeltaPercentage = 0.01;
+
+    return camera;
+}
 
 function addUI(scene,check){
     var advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -173,3 +238,6 @@ function addUI(scene,check){
 
     panel.addControl(picker);     
 } 
+
+
+
