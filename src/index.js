@@ -5,7 +5,7 @@ import 'babylonjs-loaders';
 import 'babylonjs-inspector';
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
-let pickedPoint,distCameraTargetPosition,currentCameraTargetPosition;
+let pickedPoint;
 
 const config = {
     distCameraRadius: 0.15
@@ -15,7 +15,7 @@ class CameraRediusController {
     constructor(currentCameraRadius,speed = 4) {
       this.distCameraRadius = currentCameraRadius;
       this.currentCameraRadius = currentCameraRadius;
-      this.speed = speed
+      this.speed = speed;
       this.zoomMove = false;
     }
 
@@ -60,6 +60,7 @@ class CameraTargetController {
         }else{
             this.currentCameraTargetPosition = BABYLON.Vector3.Lerp(this.currentCameraTargetPosition,this.distCameraTargetPosition,deltaTime*this.speed);
         }
+        //console.log(this.currentCameraTargetPosition);
     }
 }
 
@@ -69,9 +70,6 @@ const createScene = () => {
     let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController(camera.radius);
     let cameraTargetController = new CameraTargetController(camera.target);
-
-    // currentCameraTargetPosition = camera.target;
-    // distCameraTargetPosition = camera.target;
     camera.attachControl(canvas, true);
     setUpEnvironment(scene);
 
@@ -95,9 +93,12 @@ const createScene = () => {
         });
     
     });
+    scene.onPointerMove  = function (event, pickResult){
+        pickedPoint = pickResult.pickedPoint;
+    }
 
     scene.registerBeforeRender(function () {
-        update(scene,camera);
+       // update(scene,camera);
         const deltaTime = engine.getDeltaTime() / 1000;
         cameraRediusController.updateParameterAtFrame(deltaTime);
         cameraTargetController.updateParameterAtFrame(deltaTime);
@@ -107,15 +108,16 @@ const createScene = () => {
         }else{
             cameraRediusController.currentCameraRadius = camera.radius;
         }
+        // console.log(cameraRediusController.zoomMove);
+        // console.log(cameraRediusController.currentCameraRadius);
+        console.log( camera);
         camera.target = cameraTargetController.currentCameraTargetPosition;
     });
 
     scene.onPointerDown  = function (event, pickResult){
-        cameraRediusController.endMove();
+        //cameraRediusController.endMove();
     }
-    scene.onPointerMove  = function (event, pickResult){
-        pickedPoint = pickResult.pickedPoint;
-    }
+
 
    
 
