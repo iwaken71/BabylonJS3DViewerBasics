@@ -9,6 +9,7 @@ const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engi
 // Add your code here matching the playground format
 const  createScene = () => {
     const scene = new BABYLON.Scene(engine);
+    scene.collisionsEnabled = true;
     // var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("./assets/environment.dds", scene);
     // var currentSkybox = scene.createDefaultSkybox(hdrTexture, true);
    // const ground = BABYLON.MeshBuilder.CreateGround("ground", options, scene); 
@@ -63,7 +64,14 @@ const  createScene = () => {
         // );
         // pipeline.depthOfFieldEnabled = true;
         // pipeline.bloomEnabled = true;
+        const action1 =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
 
+            console.log("double click");
+        });
+        meshes[1].actionManager = new BABYLON.ActionManager(scene);
+        meshes[1].actionManager.registerAction(action1);
+        meshes[2].actionManager = new BABYLON.ActionManager(scene);
+        meshes[2].actionManager.registerAction(action1);
 
 
     });
