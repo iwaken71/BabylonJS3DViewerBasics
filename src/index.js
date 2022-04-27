@@ -64,15 +64,24 @@ class CameraRediusController {
     }
 }
 class CameraTargetController {
-    constructor(currentCameraTargetPosition,speed = 5) {
-        this.distCameraTargetPosition = currentCameraTargetPosition;
-        this.currentCameraTargetPosition = currentCameraTargetPosition;
-        this.speed = speed
+    #distCameraTargetPosition;
+    #currentCameraTargetPosition;
+    #camera;
+    #speed = 5;
+    
+    constructor(speed = 5) {
+        // this.#distCameraTargetPosition = currentCameraTargetPosition;
+        // this.#currentCameraTargetPosition = currentCameraTargetPosition;
+        this.#speed = speed
     }
+    setSpeed(speed){
+        this.#speed = speed;
 
-    initializeTargetPosition(targetPosition){
-        this.distCameraTargetPosition = targetPosition;
-        this.currentCameraTargetPosition = targetPosition;
+    }
+    setCamera(camera){
+        this.#camera = camera
+        this.#distCameraTargetPosition = camera.target;
+        this.#currentCameraTargetPosition = camera.target;
     }
 
     beginMove(distCameraTargetPosition){
@@ -80,11 +89,15 @@ class CameraTargetController {
     }
 
     updateParameterAtFrame(deltaTime){
-        if(BABYLON.Vector3.DistanceSquared(this.currentCameraTargetPosition,this.distCameraTargetPosition) <= 0.00000001){
-            this.currentCameraTargetPosition = this.distCameraTargetPosition;
-        }else{
-            this.currentCameraTargetPosition = BABYLON.Vector3.Lerp(this.currentCameraTargetPosition,this.distCameraTargetPosition,deltaTime*this.speed);
+        if(this.#camera == null){
+            return;
         }
+        if(BABYLON.Vector3.DistanceSquared(this.#currentCameraTargetPosition,this.#distCameraTargetPosition) <= 0.00000001){
+            this.#currentCameraTargetPosition = this.#distCameraTargetPosition;
+        }else{
+            this.#currentCameraTargetPosition = BABYLON.Vector3.Lerp(this.#currentCameraTargetPosition,this.#distCameraTargetPosition,deltaTime*this.#speed);
+        }
+        this.#camera.target =  this.#currentCameraTargetPosition;
         //console.log(this.currentCameraTargetPosition);
     }
 }
@@ -94,14 +107,14 @@ const createScene = () => {
     const scene = new BABYLON.Scene(engine);
     let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController();
-    let cameraTargetController = new CameraTargetController(camera.target);
+    let cameraTargetController = new CameraTargetController();
     camera.attachControl(canvas, true);
     setUpEnvironment(scene);
 
     BABYLON.SceneLoader.ImportMesh("","./assets/", "chair.glb", scene, function (meshes, particleSystems, skeletons) {
 
         camera = setUpCameraSetting(scene);
-        cameraTargetController.initializeTargetPosition(camera.target);
+        cameraTargetController.setCamera(camera);
         cameraRediusController.setCamera(camera);
 
         createSkeybox(scene);
@@ -128,7 +141,6 @@ const createScene = () => {
         const deltaTime = engine.getDeltaTime() / 1000;
         cameraRediusController.updateParameterAtFrame(deltaTime);
         cameraTargetController.updateParameterAtFrame(deltaTime);
-        camera.target = cameraTargetController.currentCameraTargetPosition;
     });
 
     scene.onPointerDown  = function (event, pickResult){
