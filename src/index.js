@@ -97,7 +97,7 @@ class CameraTargetController {
 }
 
 class CameraController {
-    #targetController;#radiusController;#camera;
+    #targetController;#radiusController;
 
     constructor() {
         this.#targetController = new CameraTargetController();
@@ -120,7 +120,7 @@ class CameraController {
     }
 
     setCamera(camera){
-        this.#camera = camera;
+       // this.#camera = camera;
         this.#targetController.setCamera(camera);
         this.#radiusController.setCamera(camera);
         // this.#distCameraRadius = camera.radius;
@@ -131,8 +131,8 @@ class CameraController {
         this.#radiusController.endMove();
     }
     updateParameterAtFrame(deltaTime){
-        this.#radiusController.updateParameterAtFrame(deltaTime);
         this.#targetController.updateParameterAtFrame(deltaTime);
+        this.#radiusController.updateParameterAtFrame(deltaTime);
     }
 }
 
@@ -140,24 +140,27 @@ class CameraController {
 const createScene = () => {
     const scene = new BABYLON.Scene(engine);
     let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
-    let cameraRediusController = new CameraRediusController();
-    let cameraTargetController = new CameraTargetController();
-    cameraRediusController.setDistCameraRadius(config.distCameraRadius);
+    // let cameraRediusController = new CameraRediusController();
+    // let cameraTargetController = new CameraTargetController();
+    let cameraController = new CameraController(); 
+  //  cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
     setUpEnvironment(scene);
 
     BABYLON.SceneLoader.ImportMesh("","./assets/", "chair.glb", scene, function (meshes, particleSystems, skeletons) {
 
         camera = setUpCameraSetting(scene);
-        cameraTargetController.setCamera(camera);
-        cameraRediusController.setCamera(camera);
+        cameraController.setCamera();
+        // cameraTargetController.setCamera(camera);
+        // cameraRediusController.setCamera(camera);
 
         createSkeybox(scene);
         addUI(scene,(on)=>onCheckbox(on,meshes));
         const action1 =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
             // distCameraTargetPosition = pickedPoint;
-            cameraTargetController.beginMove(pickedPoint);
-            cameraRediusController.beginMove();
+            cameraController.beginMove(pickedPoint);
+            // cameraTargetController.beginMove(pickedPoint);
+            // cameraRediusController.beginMove();
         });
         meshes.forEach(mesh =>{
             if(mesh){
@@ -174,13 +177,15 @@ const createScene = () => {
     scene.registerBeforeRender(function () {
        // update(scene,camera);
         const deltaTime = engine.getDeltaTime() / 1000;
-        cameraTargetController.updateParameterAtFrame(deltaTime);
-        cameraRediusController.updateParameterAtFrame(deltaTime);
+        cameraController.updateParameterAtFrame(deltaTime);
+        // cameraTargetController.updateParameterAtFrame(deltaTime);
+        // cameraRediusController.updateParameterAtFrame(deltaTime);
         console.log(camera.radius+","+camera.target);
     });
 
     scene.onPointerDown  = function (event, pickResult){
-        cameraRediusController.endMove();
+        cameraController.endMove();
+       // cameraRediusController.endMove();
     }
 
 
