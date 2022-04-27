@@ -8,33 +8,58 @@ const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engi
 let pickedPoint;
 
 const config = {
-    distCameraRadius: 0.15
+    distCameraRadius: 0.1
 }
 
 class CameraRediusController {
-    constructor(currentCameraRadius,speed = 4) {
-      this.distCameraRadius = currentCameraRadius;
-      this.currentCameraRadius = currentCameraRadius;
-      this.speed = speed;
-      this.zoomMove = false;
+    #distCameraRadius = 1.5;
+    #currentCameraRadius = 1.5;
+    #speed = 4;
+    #zoomMove = false;
+    #camera;
+
+    constructor(speed = 4) {
+        // this.#distCameraRadius = currentCameraRadius;
+        // this.#currentCameraRadius = currentCameraRadius;
+        this.#speed = speed;
+        this.#zoomMove = false;
+    }
+    get currentCameraRadius() {
+        return this.#currentCameraRadius;
+    }
+
+    setSpeed(speed){
+        this.#speed = speed;
     }
 
     beginMove(distCameraRadius){
-        this.zoomMove = true;
-        this.distCameraRadius = distCameraRadius;
+        this.#zoomMove = true;
+        this.#distCameraRadius = distCameraRadius;
+    }
+
+    setCamera(camera){
+        this.#camera = camera;
+        this.#distCameraRadius = camera.radius;
+        this.#currentCameraRadius = camera.radius;
     }
 
     endMove(){
-        this.zoomMove = false;
+        this.#zoomMove = false;
     }
     updateParameterAtFrame(deltaTime){
-        if(this.zoomMove){
-            if(Math.abs(this.currentCameraRadius-this.distCameraRadius) <= 0.0001){
-                this.currentCameraRadius = this.distCameraRadius;
-                this.zoomMove = false;
+        if(this.#camera == null){
+            return;
+        }
+        if(this.#zoomMove){
+            if(Math.abs(this.#currentCameraRadius-this.#distCameraRadius) <= 0.0001){
+                this.#currentCameraRadius = this.#distCameraRadius;
+                this.#zoomMove = false;
             }else{
-                this.currentCameraRadius = BABYLON.Scalar.Lerp(this.currentCameraRadius,this.distCameraRadius,deltaTime*this.speed);
+                this.#currentCameraRadius = BABYLON.Scalar.Lerp(this.#currentCameraRadius,this.#distCameraRadius,deltaTime*this.#speed);
             }
+            this.#camera.radius =  this.#currentCameraRadius;
+        }else{
+            this.#currentCameraRadius =  this.#camera.radius;
         }
     }
 }
@@ -68,7 +93,7 @@ class CameraTargetController {
 const createScene = () => {
     const scene = new BABYLON.Scene(engine);
     let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
-    let cameraRediusController = new CameraRediusController(camera.radius);
+    let cameraRediusController = new CameraRediusController();
     let cameraTargetController = new CameraTargetController(camera.target);
     camera.attachControl(canvas, true);
     setUpEnvironment(scene);
@@ -77,6 +102,7 @@ const createScene = () => {
 
         camera = setUpCameraSetting(scene);
         cameraTargetController.initializeTargetPosition(camera.target);
+        cameraRediusController.setCamera(camera);
 
         createSkeybox(scene);
         addUI(scene,(on)=>onCheckbox(on,meshes));
@@ -102,20 +128,11 @@ const createScene = () => {
         const deltaTime = engine.getDeltaTime() / 1000;
         cameraRediusController.updateParameterAtFrame(deltaTime);
         cameraTargetController.updateParameterAtFrame(deltaTime);
-        if(cameraRediusController.zoomMove){
-            camera.radius = cameraRediusController.currentCameraRadius;
-           
-        }else{
-            cameraRediusController.currentCameraRadius = camera.radius;
-        }
-        // console.log(cameraRediusController.zoomMove);
-        // console.log(cameraRediusController.currentCameraRadius);
-        console.log( camera);
         camera.target = cameraTargetController.currentCameraTargetPosition;
     });
 
     scene.onPointerDown  = function (event, pickResult){
-        //cameraRediusController.endMove();
+        cameraRediusController.endMove();
     }
 
 
@@ -134,7 +151,7 @@ window.addEventListener("resize", function () {
 });
 
 function update(scene,camera){
-    const deltaTime = engine.getDeltaTime() / 1000;
+    //const deltaTime = engine.getDeltaTime() / 1000;
     // if(BABYLON.Vector3.DistanceSquared(currentCameraTargetPosition,distCameraTargetPosition) <= 0.00000001){
     //     currentCameraTargetPosition = distCameraTargetPosition;
     //     camera.target = currentCameraTargetPosition;
@@ -142,6 +159,7 @@ function update(scene,camera){
     //     currentCameraTargetPosition = BABYLON.Vector3.Lerp(currentCameraTargetPosition,distCameraTargetPosition,deltaTime*5);
     //     camera.target = currentCameraTargetPosition;
     // }
+    
 }
 
 function createSkeybox(scene){
