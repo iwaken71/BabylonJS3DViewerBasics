@@ -12,34 +12,31 @@ const config = {
 }
 
 class CameraRediusController {
-    #distCameraRadius = 1.5;
+    #distCameraRadius = 0.15;
     #currentCameraRadius = 1.5;
     #speed = 4;
     #zoomMove = false;
     #camera;
 
-    constructor(speed = 4) {
-        // this.#distCameraRadius = currentCameraRadius;
-        // this.#currentCameraRadius = currentCameraRadius;
-        this.#speed = speed;
+    constructor() {
         this.#zoomMove = false;
     }
     get currentCameraRadius() {
         return this.#currentCameraRadius;
     }
-
+    setDistCameraRadius(radius){
+        this.#distCameraRadius = radius;
+    }
     setSpeed(speed){
         this.#speed = speed;
     }
 
-    beginMove(distCameraRadius){
+    beginMove(){
         this.#zoomMove = true;
-        this.#distCameraRadius = distCameraRadius;
     }
 
     setCamera(camera){
         this.#camera = camera;
-        this.#distCameraRadius = camera.radius;
         this.#currentCameraRadius = camera.radius;
     }
 
@@ -64,15 +61,12 @@ class CameraRediusController {
     }
 }
 class CameraTargetController {
-    #distCameraTargetPosition;
-    #currentCameraTargetPosition;
+    #distCameraTargetPosition = BABYLON.Vector3.Zero;
+    #currentCameraTargetPosition = BABYLON.Vector3.Zero;
     #camera;
     #speed = 5;
     
-    constructor(speed = 5) {
-        // this.#distCameraTargetPosition = currentCameraTargetPosition;
-        // this.#currentCameraTargetPosition = currentCameraTargetPosition;
-        this.#speed = speed
+    constructor() {
     }
     setSpeed(speed){
         this.#speed = speed;
@@ -82,10 +76,11 @@ class CameraTargetController {
         this.#camera = camera
         this.#distCameraTargetPosition = camera.target;
         this.#currentCameraTargetPosition = camera.target;
+        console.log(camera);
     }
 
     beginMove(distCameraTargetPosition){
-        this.distCameraTargetPosition = distCameraTargetPosition;
+        this.#distCameraTargetPosition = distCameraTargetPosition;
     }
 
     updateParameterAtFrame(deltaTime){
@@ -98,7 +93,46 @@ class CameraTargetController {
             this.#currentCameraTargetPosition = BABYLON.Vector3.Lerp(this.#currentCameraTargetPosition,this.#distCameraTargetPosition,deltaTime*this.#speed);
         }
         this.#camera.target =  this.#currentCameraTargetPosition;
-        //console.log(this.currentCameraTargetPosition);
+    }
+}
+
+class CameraController {
+    #targetController;#radiusController;#camera;
+
+    constructor() {
+        this.#targetController = new CameraTargetController();
+        this.#radiusController = new CameraRediusController();
+    }
+    // get currentCameraRadius() {
+    //     return this.#currentCameraRadius;
+    // }
+
+    setRadiusSpeed(speed){
+        this.#radiusController.setSpeed(speed);
+    }
+    setTargetSpeed(speed){
+        this.#targetController.setSpeed(speed);
+    }
+
+    beginMove(targetPosition){
+        this.#targetController.beginMove(targetPosition);
+        this.#radiusController.beginMove();
+    }
+
+    setCamera(camera){
+        this.#camera = camera;
+        this.#targetController.setCamera(camera);
+        this.#radiusController.setCamera(camera);
+        // this.#distCameraRadius = camera.radius;
+        // this.#currentCameraRadius = camera.radius;
+    }
+
+    endMove(){
+        this.#radiusController.endMove();
+    }
+    updateParameterAtFrame(deltaTime){
+        this.#radiusController.updateParameterAtFrame(deltaTime);
+        this.#targetController.updateParameterAtFrame(deltaTime);
     }
 }
 
@@ -108,6 +142,7 @@ const createScene = () => {
     let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController();
     let cameraTargetController = new CameraTargetController();
+    cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
     setUpEnvironment(scene);
 
@@ -122,7 +157,7 @@ const createScene = () => {
         const action1 =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
             // distCameraTargetPosition = pickedPoint;
             cameraTargetController.beginMove(pickedPoint);
-            cameraRediusController.beginMove(config.distCameraRadius);
+            cameraRediusController.beginMove();
         });
         meshes.forEach(mesh =>{
             if(mesh){
@@ -139,8 +174,9 @@ const createScene = () => {
     scene.registerBeforeRender(function () {
        // update(scene,camera);
         const deltaTime = engine.getDeltaTime() / 1000;
-        cameraRediusController.updateParameterAtFrame(deltaTime);
         cameraTargetController.updateParameterAtFrame(deltaTime);
+        cameraRediusController.updateParameterAtFrame(deltaTime);
+        console.log(camera.radius+","+camera.target);
     });
 
     scene.onPointerDown  = function (event, pickResult){
