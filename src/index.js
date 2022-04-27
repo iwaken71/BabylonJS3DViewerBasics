@@ -8,7 +8,12 @@ const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engi
 let pickedPoint;
 
 const config = {
-    distCameraRadius: 0.1
+    distCameraRadius: 0.15,
+
+    hdriFilePath: [
+        "./assets/hdri.env",
+        "./assets/environment.env"
+    ]
 }
 
 class CameraRediusController {
@@ -96,46 +101,6 @@ class CameraTargetController {
     }
 }
 
-class CameraController {
-    #targetController;#radiusController;#camera;
-
-    constructor() {
-        this.#targetController = new CameraTargetController();
-        this.#radiusController = new CameraRediusController();
-    }
-    // get currentCameraRadius() {
-    //     return this.#currentCameraRadius;
-    // }
-
-    setRadiusSpeed(speed){
-        this.#radiusController.setSpeed(speed);
-    }
-    setTargetSpeed(speed){
-        this.#targetController.setSpeed(speed);
-    }
-
-    beginMove(targetPosition){
-        this.#targetController.beginMove(targetPosition);
-        this.#radiusController.beginMove();
-    }
-
-    setCamera(camera){
-        this.#camera = camera;
-        this.#targetController.setCamera(camera);
-        this.#radiusController.setCamera(camera);
-        // this.#distCameraRadius = camera.radius;
-        // this.#currentCameraRadius = camera.radius;
-    }
-
-    endMove(){
-        this.#radiusController.endMove();
-    }
-    updateParameterAtFrame(deltaTime){
-        this.#radiusController.updateParameterAtFrame(deltaTime);
-        this.#targetController.updateParameterAtFrame(deltaTime);
-    }
-}
-
 // Add your code here matching the playground format
 const createScene = () => {
     const scene = new BABYLON.Scene(engine);
@@ -144,7 +109,7 @@ const createScene = () => {
     let cameraTargetController = new CameraTargetController();
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
-    setUpEnvironment(scene);
+    setUpEnvironment(scene,config.hdriFilePath[0]);
 
     BABYLON.SceneLoader.ImportMesh("","./assets/", "chair.glb", scene, function (meshes, particleSystems, skeletons) {
 
@@ -152,40 +117,40 @@ const createScene = () => {
         cameraTargetController.setCamera(camera);
         cameraRediusController.setCamera(camera);
 
-        createSkeybox(scene);
-        addUI(scene,(on)=>onCheckbox(on,meshes));
-        const action1 =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
-            // distCameraTargetPosition = pickedPoint;
+        createSkybox(scene);
+        addUI(scene,(on)=>{
+            if(on){
+                setUpEnvironment(scene,config.hdriFilePath[0]);
+
+            }else{
+                setUpEnvironment(scene,config.hdriFilePath[1]);
+            }
+        });
+
+        const cameraMoveAction =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
             cameraTargetController.beginMove(pickedPoint);
             cameraRediusController.beginMove();
         });
         meshes.forEach(mesh =>{
             if(mesh){
                 mesh.actionManager = new BABYLON.ActionManager(scene);
-                mesh.actionManager.registerAction(action1);
+                mesh.actionManager.registerAction(cameraMoveAction);
             }
         });
-    
     });
     scene.onPointerMove  = function (event, pickResult){
         pickedPoint = pickResult.pickedPoint;
     }
 
     scene.registerBeforeRender(function () {
-       // update(scene,camera);
         const deltaTime = engine.getDeltaTime() / 1000;
         cameraTargetController.updateParameterAtFrame(deltaTime);
         cameraRediusController.updateParameterAtFrame(deltaTime);
-        console.log(camera.radius+","+camera.target);
     });
 
     scene.onPointerDown  = function (event, pickResult){
         cameraRediusController.endMove();
     }
-
-
-   
-
     return scene;
 }
 const scene = createScene(); //Call the createScene function
@@ -198,52 +163,26 @@ window.addEventListener("resize", function () {
     engine.resize();
 });
 
-function update(scene,camera){
-    //const deltaTime = engine.getDeltaTime() / 1000;
-    // if(BABYLON.Vector3.DistanceSquared(currentCameraTargetPosition,distCameraTargetPosition) <= 0.00000001){
-    //     currentCameraTargetPosition = distCameraTargetPosition;
-    //     camera.target = currentCameraTargetPosition;
-    // }else{
-    //     currentCameraTargetPosition = BABYLON.Vector3.Lerp(currentCameraTargetPosition,distCameraTargetPosition,deltaTime*5);
-    //     camera.target = currentCameraTargetPosition;
-    // }
-    
-}
-
-function createSkeybox(scene){
+function createSkybox(scene,filePath = "assets/hdri.env"){
     var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
     var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/hdri_4k.env", scene);
+    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(filePath, scene);
     skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
     skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
     skybox.material = skyboxMaterial;
 }
 
-function onCheckbox(enabled,meshes){
-    meshes[1].material.wireframe = !enabled;
+function changeSkyboxBox(scene,filePath){
+    console.log(scene.skyboxMaterial);
+    scene.skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(filePath, scene);
 
-    meshes.forEach(mesh => {
-        console.log(mesh.material);
-        if(mesh.material){
-            // mesh.material.wireframe = !on;
-            // mesh.material.wireframe = !on;
-        }
-    });
-
-    if(enabled){
-       // skybox.material = null;
- 
-    }else{
-       // skybox.material = skyboxMaterial;
-    }
 }
 
-function setUpEnvironment(scene){
-    var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/hdri_4k.env", scene);
+function setUpEnvironment(scene,hdrFilePath){
+    var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(hdrFilePath, scene);
     scene.environmentTexture = hdrTexture;
-
 }
 function setUpPipeline(camera){
 
