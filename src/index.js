@@ -1,17 +1,17 @@
 import * as BABYLON from 'babylonjs';
-import {Scene,ArcRotateCamera,Vector3,SceneLoader,ExecuteCodeAction,ActionManager,MeshBuilder,StandardMaterial,Color3,DefaultRenderingPipeline} from 'babylonjs';
+import {Engine,Scene,ArcRotateCamera,Vector3,SceneLoader,ExecuteCodeAction,ActionManager,MeshBuilder,StandardMaterial,Color3,DefaultRenderingPipeline,Scalar,Texture,CubeTexture} from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
-import 'babylonjs-materials';
 import 'babylonjs-loaders';
-import 'babylonjs-inspector';
-const canvas = document.getElementById("renderCanvas"); // Get the canvas element
-const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
 
-let pickedPoint; //解決したい
+const canvas = document.getElementById("renderCanvas"); // Get the canvas element
+const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
+
+let pickedPoint; //詳細的にスコープを狭くしたい
 
 const config = {
     distCameraRadius: 0.15,
-
+    assetsRootPath: "./assets/",
+    defaultAssetName: "chair.glb",
     hdriFilePath: [
         "./assets/hdri.env",
         "./assets/environment.env"
@@ -59,7 +59,7 @@ class CameraRediusController {
                 this.#currentCameraRadius = this.#distCameraRadius;
                 this.#zoomMove = false;
             }else{
-                this.#currentCameraRadius = BABYLON.Scalar.Lerp(this.#currentCameraRadius,this.#distCameraRadius,deltaTime*this.#speed);
+                this.#currentCameraRadius = Scalar.Lerp(this.#currentCameraRadius,this.#distCameraRadius,deltaTime*this.#speed);
             }
             this.#camera.radius =  this.#currentCameraRadius;
         }else{
@@ -68,8 +68,8 @@ class CameraRediusController {
     }
 }
 class CameraTargetController {
-    #distCameraTargetPosition = BABYLON.Vector3.Zero;
-    #currentCameraTargetPosition = BABYLON.Vector3.Zero;
+    #distCameraTargetPosition = Vector3.Zero;
+    #currentCameraTargetPosition = Vector3.Zero;
     #camera;
     #speed = 5;
     
@@ -94,52 +94,128 @@ class CameraTargetController {
         if(this.#camera == null){
             return;
         }
-        if(BABYLON.Vector3.DistanceSquared(this.#currentCameraTargetPosition,this.#distCameraTargetPosition) <= 0.00000001){
+        if(Vector3.DistanceSquared(this.#currentCameraTargetPosition,this.#distCameraTargetPosition) <= 0.00000001){
             this.#currentCameraTargetPosition = this.#distCameraTargetPosition;
         }else{
-            this.#currentCameraTargetPosition = BABYLON.Vector3.Lerp(this.#currentCameraTargetPosition,this.#distCameraTargetPosition,deltaTime*this.#speed);
+            this.#currentCameraTargetPosition = Vector3.Lerp(this.#currentCameraTargetPosition,this.#distCameraTargetPosition,deltaTime*this.#speed);
         }
         this.#camera.target =  this.#currentCameraTargetPosition;
     }
 }
 
+class EnvironmentController {
+    #scene;
+    #skybox;
+    #currentSkyMaterial
+    constructor(scene) {
+        this.#scene = scene;
+    }
+
+    createSkybox(envfilePath){
+        if(this.isInitialized()){
+            return;
+        }
+        var skybox = MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
+        var skyboxMaterial = new StandardMaterial("skyBox", scene);
+        skyboxMaterial.backFaceCulling = false;
+        skyboxMaterial.reflectionTexture = new CubeTexture(envfilePath, scene);
+        skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+        skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
+        skyboxMaterial.specularColor = new Color3(0, 0, 0);
+        skybox.material = skyboxMaterial;
+        this.#currentSkyMaterial = skyboxMaterial;
+        this.changeEnvironmentTexture(envfilePath);
+        this.setSkybox(skybox);
+    }
+
+    changeModeToSolidColor(){
+        if(!this.isInitialized()){
+            return;
+        }
+        this.#skybox.material = null;
+    }
+    changeModeToSkybox(){
+        if(!this.isInitialized()){
+            return;
+        }
+        this.#skybox.material = this.#currentSkyMaterial;
+    }
+    changeSoloiColor(color){
+        this.#scene.clearColor = color;
+    }
+
+    changeSkyboxTexture(envFilePath){
+        if(!this.isInitialized()){
+            return;
+        }
+        if(this.#skybox.material == null){
+            return;
+        }
+        this.#skybox.material.reflectionTexture = new CubeTexture(envFilePath, this.#scene);
+        this.#skybox.material.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+        this.#currentSkyMaterial = this.#skybox.material;
+    }
+
+    changeEnvironmentTexture(envFilePath){
+        const hdrTexture = CubeTexture.CreateFromPrefilteredData(envFilePath, this.#scene);
+        this.#scene.environmentTexture = hdrTexture;
+    }
+
+    setSkybox(skybox){
+        this.#skybox = skybox;
+    }
+
+    isInitialized(){
+        return this.#skybox != null;
+    }
+}
 // Add your code here matching the playground format
 const createScene = () => {
-    const scene = new BABYLON.Scene(engine);
-    let camera = new BABYLON.ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new BABYLON.Vector3(-0.35, 0.7, 0.8));
+    const scene = new Scene(engine);
+    let camera = new ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController();
     let cameraTargetController = new CameraTargetController();
+    let environmentController = new EnvironmentController(scene);
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
-    setUpEnvironment(scene,config.hdriFilePath[0]);
 
-    BABYLON.SceneLoader.ImportMesh("","./assets/", "chair.glb", scene, function (meshes, particleSystems, skeletons) {
+    SceneLoader.ImportMesh("",config.assetsRootPath, config.defaultAssetName, scene, function (meshes, particleSystems, skeletons) {
 
         camera = setUpCameraSetting(scene);
         cameraTargetController.setCamera(camera);
         cameraRediusController.setCamera(camera);
+        environmentController.createSkybox(config.hdriFilePath[0]);
 
-        createSkybox(scene);
         addUI(scene,(on)=>{
             if(on){
-                setUpEnvironment(scene,config.hdriFilePath[0]);
-
+                environmentController.changeSkyboxTexture(config.hdriFilePath[0]);
+                environmentController.changeEnvironmentTexture(config.hdriFilePath[0]);
             }else{
-                setUpEnvironment(scene,config.hdriFilePath[1]);
+                environmentController.changeSkyboxTexture(config.hdriFilePath[1]);
+                environmentController.changeEnvironmentTexture(config.hdriFilePath[1]);
+            }
+        },(on) =>{
+            if(on){
+                environmentController.changeModeToSkybox()
+            }else{
+                environmentController.changeModeToSolidColor();
             }
         });
 
-        const cameraMoveAction =  new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnDoublePickTrigger,() => {
+        // MeshへのダブルクリックのAction
+        const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnDoublePickTrigger,() => {
             cameraTargetController.beginMove(pickedPoint);
             cameraRediusController.beginMove();
         });
         meshes.forEach(mesh =>{
             if(mesh){
-                mesh.actionManager = new BABYLON.ActionManager(scene);
+                mesh.actionManager = new ActionManager(scene);
                 mesh.actionManager.registerAction(cameraMoveAction);
             }
         });
     });
+
+    //FIXME:
     scene.onPointerMove  = function (event, pickResult){
         pickedPoint = pickResult.pickedPoint;
     }
@@ -165,30 +241,9 @@ window.addEventListener("resize", function () {
     engine.resize();
 });
 
-function createSkybox(scene,filePath = "assets/hdri.env"){
-    var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
-    var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
-    skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(filePath, scene);
-    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-    skybox.material = skyboxMaterial;
-}
-
-function changeSkyboxBox(scene,filePath){
-    console.log(scene.skyboxMaterial);
-    scene.skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(filePath, scene);
-
-}
-
-function setUpEnvironment(scene,hdrFilePath){
-    var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(hdrFilePath, scene);
-    scene.environmentTexture = hdrTexture;
-}
 function setUpPipeline(camera){
 
-    var pipeline = new BABYLON.DefaultRenderingPipeline(
+    var pipeline = new DefaultRenderingPipeline(
         "defaultPipeline", // The name of the pipeline
         true, // Do you want the pipeline to use HDR texture?
         scene, // The scene instance
@@ -203,7 +258,7 @@ function setUpCameraSetting(scene){
     let camera = scene.activeCamera;
     camera.alpha = 3*Math.PI/4;
     camera.beta = Math.PI/3;
-    scene.clearColor = new BABYLON.Color3(221/255, 221/255, 221/255);
+    scene.clearColor = new Color3(221/255, 221/255, 221/255);
     camera.speed = 0.4204;
     camera.lowerRadiusLimit = 0.0210;
     camera.panningSensibility = 5000;
@@ -215,7 +270,7 @@ function setUpCameraSetting(scene){
     return camera;
 }
 
-function addUI(scene,check){
+function addUI(scene,check,check2){
     var advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
     var panel = new GUI.StackPanel();
     panel.width = "200px";
@@ -243,7 +298,16 @@ function addUI(scene,check){
     checkbox.onIsCheckedChangedObservable.add(function(value) {
         check(value);
     });
+    var checkbox2 = new GUI.Checkbox();
+    checkbox2.width = "20px";
+    checkbox2.height = "20px";
+    checkbox2.isChecked = true;
+    checkbox2.color = "green";
+    checkbox2.onIsCheckedChangedObservable.add(function(value) {
+        check2(value);
+    });
     panel.addControl(checkbox);
+    panel.addControl(checkbox2);
 
     panel.addControl(picker);     
 } 
