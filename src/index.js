@@ -6,7 +6,7 @@ import 'babylonjs-loaders';
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 
-let pickedPoint; //詳細的にスコープを狭くしたい
+
 
 const config = {
     distCameraRadius: 0.15,
@@ -176,6 +176,7 @@ const createScene = () => {
     let cameraRediusController = new CameraRediusController();
     let cameraTargetController = new CameraTargetController();
     let environmentController = new EnvironmentController(scene);
+    let pickedPoint; //詳細的にスコープを狭くしたい
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
 
@@ -185,22 +186,6 @@ const createScene = () => {
         cameraTargetController.setCamera(camera);
         cameraRediusController.setCamera(camera);
         environmentController.createSkybox(config.hdriFilePath[0]);
-
-        addUI(scene,(on)=>{
-            if(on){
-                environmentController.changeSkyboxTexture(config.hdriFilePath[0]);
-                environmentController.changeEnvironmentTexture(config.hdriFilePath[0]);
-            }else{
-                environmentController.changeSkyboxTexture(config.hdriFilePath[1]);
-                environmentController.changeEnvironmentTexture(config.hdriFilePath[1]);
-            }
-        },(on) =>{
-            if(on){
-                environmentController.changeModeToSkybox()
-            }else{
-                environmentController.changeModeToSolidColor();
-            }
-        });
 
         // MeshへのダブルクリックのAction
         const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnDoublePickTrigger,() => {
@@ -213,6 +198,23 @@ const createScene = () => {
                 mesh.actionManager.registerAction(cameraMoveAction);
             }
         });
+    });
+
+    addUI(scene,
+    (checkBox1)=>{
+        if(checkBox1){
+            environmentController.changeSkyboxTexture(config.hdriFilePath[0]);
+            environmentController.changeEnvironmentTexture(config.hdriFilePath[0]);
+        }else{
+            environmentController.changeSkyboxTexture(config.hdriFilePath[1]);
+            environmentController.changeEnvironmentTexture(config.hdriFilePath[1]);
+        }
+    },(checkBox2) =>{
+        if(checkBox2){
+            environmentController.changeModeToSkybox()
+        }else{
+            environmentController.changeModeToSolidColor();
+        }
     });
 
     //FIXME:
@@ -266,7 +268,6 @@ function setUpCameraSetting(scene){
     camera.upperRadiusLimit = 20;
     camera.pinchDeltaPercentage = 0.001;
     camera.wheelDeltaPercentage = 0.01;
-
     return camera;
 }
 
