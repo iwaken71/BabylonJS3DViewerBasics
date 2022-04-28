@@ -234,7 +234,7 @@ const createScene = () => {
     return scene;
 }
 const scene = createScene(); //Call the createScene function
-scene.debugLayer.show();
+//scene.debugLayer.show();
 engine.runRenderLoop(function () {
     scene.render();
 });
