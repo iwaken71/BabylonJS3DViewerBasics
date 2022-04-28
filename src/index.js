@@ -9,9 +9,9 @@ const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 
 
 const config = {
-    distCameraRadius: 0.15,
+    distCameraRadius: 4,
     assetsRootPath: "./assets/",
-    defaultAssetName: "chair.glb",
+    defaultAssetName: "StudioB2.glb",
     hdriFilePath: [
         "./assets/hdri.env",
         "./assets/environment.env"
@@ -198,6 +198,7 @@ const createScene = () => {
                 mesh.actionManager.registerAction(cameraMoveAction);
             }
         });
+        setUpPipeline(camera);
     });
 
     addUI(scene,
@@ -231,6 +232,8 @@ const createScene = () => {
     scene.onPointerDown  = function (event, pickResult){
         cameraRediusController.endMove();
     }
+
+
     return scene;
 }
 const scene = createScene(); //Call the createScene function
@@ -253,6 +256,7 @@ function setUpPipeline(camera){
     );
     pipeline.depthOfFieldEnabled = true;
     pipeline.bloomEnabled = true;
+    pipeline.depthOfField.focalLength =27;
 }
 
 function setUpCameraSetting(scene){
