@@ -1,11 +1,13 @@
 import * as BABYLON from 'babylonjs';
+import {Scene,ArcRotateCamera,Vector3,SceneLoader,ExecuteCodeAction,ActionManager,MeshBuilder,StandardMaterial,Color3,DefaultRenderingPipeline} from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
 import 'babylonjs-materials';
 import 'babylonjs-loaders';
 import 'babylonjs-inspector';
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 const engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
-let pickedPoint;
+
+let pickedPoint; //解決したい
 
 const config = {
     distCameraRadius: 0.15,
