@@ -2,6 +2,8 @@ import * as BABYLON from 'babylonjs';
 import {Engine,Scene,ArcRotateCamera,Vector3,SceneLoader,ExecuteCodeAction,ActionManager,MeshBuilder,StandardMaterial,Color3,DefaultRenderingPipeline,Scalar,Texture,CubeTexture} from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
 import 'babylonjs-loaders';
+
+
 import {CameraRediusController,CameraTargetController,EnvironmentController} from './Utils.js';
 
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
@@ -18,7 +20,7 @@ const config = {
 }
 
 // Add your code here matching the playground format
-const createScene = () => {
+const createScene = function () {
     const scene = new Scene(engine);
     let camera = new ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController();
@@ -28,15 +30,17 @@ const createScene = () => {
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
 
-    SceneLoader.ImportMesh("",config.assetsRootPath, config.defaultAssetName, scene, function (meshes, particleSystems, skeletons) {
-
+    const importPromise = SceneLoader.ImportMeshAsync("",config.assetsRootPath, config.defaultAssetName, scene);
+    
+    importPromise.then((result) => {
+        let meshes = result.meshes;
         camera = setUpCameraSetting(scene);
         cameraTargetController.setCamera(camera);
         cameraRediusController.setCamera(camera);
         environmentController.createSkybox(config.hdriFilePath[0]);
 
         // MeshへのダブルクリックのAction
-        const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnDoublePickTrigger,() => {
+        const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnPickTrigger,() => {
             cameraTargetController.beginMove(pickedPoint);
             cameraRediusController.beginMove();
         });
