@@ -2,9 +2,9 @@ import * as BABYLON from 'babylonjs';
 import {Engine,Scene,ArcRotateCamera,Vector3,SceneLoader,ExecuteCodeAction,ActionManager,MeshBuilder,StandardMaterial,Color3,DefaultRenderingPipeline,Scalar,Texture,CubeTexture} from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
 import 'babylonjs-loaders';
-
-
 import {CameraRediusController,CameraTargetController,EnvironmentController} from './Utils.js';
+
+(async ()=>{
 
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
 const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
@@ -20,7 +20,7 @@ const config = {
 }
 
 // Add your code here matching the playground format
-const createScene = function () {
+const createScene = async function () {
     const scene = new Scene(engine);
     let camera = new ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController();
@@ -30,26 +30,24 @@ const createScene = function () {
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
 
-    const importPromise = SceneLoader.ImportMeshAsync("",config.assetsRootPath, config.defaultAssetName, scene);
-    
-    importPromise.then((result) => {
-        let meshes = result.meshes;
-        camera = setUpCameraSetting(scene);
-        cameraTargetController.setCamera(camera);
-        cameraRediusController.setCamera(camera);
-        environmentController.createSkybox(config.hdriFilePath[0]);
+    const result = await SceneLoader.ImportMeshAsync("",config.assetsRootPath, config.defaultAssetName, scene);
 
-        // MeshへのダブルクリックのAction
-        const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnPickTrigger,() => {
-            cameraTargetController.beginMove(pickedPoint);
-            cameraRediusController.beginMove();
-        });
-        meshes.forEach(mesh =>{
-            if(mesh){
-                mesh.actionManager = new ActionManager(scene);
-                mesh.actionManager.registerAction(cameraMoveAction);
-            }
-        });
+    let meshes = result.meshes;
+    camera = setUpCameraSetting(scene);
+    cameraTargetController.setCamera(camera);
+    cameraRediusController.setCamera(camera);
+    environmentController.createSkybox(config.hdriFilePath[0]);
+
+    // MeshへのダブルクリックのAction
+    const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnPickTrigger,() => {
+        cameraTargetController.beginMove(pickedPoint);
+        cameraRediusController.beginMove();
+    });
+    meshes.forEach(mesh =>{
+        if(mesh){
+            mesh.actionManager = new ActionManager(scene);
+            mesh.actionManager.registerAction(cameraMoveAction);
+        }
     });
 
     addUI(scene,
@@ -85,7 +83,7 @@ const createScene = function () {
     }
     return scene;
 }
-const scene = createScene(); //Call the createScene function
+const scene = await createScene(); //Call the createScene function
 //scene.debugLayer.show();
 engine.runRenderLoop(function () {
     scene.render();
@@ -167,3 +165,4 @@ function addUI(scene,check,check2){
 
 
 
+})()
