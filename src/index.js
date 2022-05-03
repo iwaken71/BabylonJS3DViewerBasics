@@ -35,19 +35,18 @@ const config = {
 // Add your code here matching the playground format
 const createScene = async function () {
     const scene = new Scene(engine);
-    let camera = new ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new Vector3(-0.35, 0.7, 0.8));
+    //let camera;// = new ArcRotateCamera("camera", 3*Math.PI/4, Math.PI/3, 2.1, new Vector3(-0.35, 0.7, 0.8));
     let cameraRediusController = new CameraRediusController();
     let cameraTargetController = new CameraTargetController();
     let environmentController = new EnvironmentController(scene);
     let viewController = new UIController();
     let pickedPoint; //詳細的にスコープを狭くしたい
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
-    camera.attachControl(canvas, true);
-
-    const result = await SceneLoader.ImportMeshAsync("",config.assetsRootPath, config.defaultAssetName, scene);
-
+ 
+    const result = await SceneLoader.ImportMeshAsync("","./assets/", "vase2k.glb", scene);
     let meshes = result.meshes;
-    camera = setUpCameraSetting(scene);
+    let camera = setUpCameraSetting(scene);
+    camera.attachControl(canvas, true);
     cameraTargetController.setCamera(camera);
     cameraRediusController.setCamera(camera);
     environmentController.createSkybox(config.hdriInfo[0].path);
