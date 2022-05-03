@@ -10,13 +10,25 @@ const canvas = document.getElementById("renderCanvas"); // Get the canvas elemen
 const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 
 const config = {
-    distCameraRadius: 0.15,
-    assetsRootPath: "./assets/",
+    distCameraRadius: 1,
+    radiusSpeed: 2.0,
+    targetSpeed: 2.0,
+    assetsRootPath: "https://raw.githubusercontent.com/iwaken71/BabylonJS3DViewerBasics/master/public/assets/",
     defaultAssetName: "vase.glb",
-    hdriFilePath: [
-        "./assets/hdri.env",
-        "./assets/environment.env"
-    ]
+    hdriInfo: [
+        {
+            name : "HDRI1",
+            path : "https://raw.githubusercontent.com/iwaken71/BabylonJS3DViewerBasics/master/public/assets/hdri.env"
+        },
+        {
+            name: "HDRI2",
+            path: "https://raw.githubusercontent.com/iwaken71/BabylonJS3DViewerBasics/master/public/assets/environment.env"
+        },
+        {
+            name: "HDRI3",
+            path: "https://playground.babylonjs.com/textures/environment.dds"
+        }
+    ],
 }
 
 // Add your code here matching the playground format
@@ -37,10 +49,10 @@ const createScene = async function () {
     camera = setUpCameraSetting(scene);
     cameraTargetController.setCamera(camera);
     cameraRediusController.setCamera(camera);
-    environmentController.createSkybox(config.hdriFilePath[0]);
+    environmentController.createSkybox(config.hdriInfo[0].path);
 
     // MeshへのダブルクリックのAction
-    const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnPickTrigger,() => {
+    const cameraMoveAction =  new ExecuteCodeAction(ActionManager.OnDoublePickTrigger,() => {
         cameraTargetController.beginMove(pickedPoint);
         cameraRediusController.beginMove();
     });
@@ -55,22 +67,23 @@ const createScene = async function () {
     viewController.AddEventOnPickerValueChanged((color) => {
         scene.clearColor = color;
     });
-    viewController.AddEventOnIsCheckBox1Changed((on)=> {
-        if(on){
-            environmentController.changeSkyboxTexture(config.hdriFilePath[0]);
-            environmentController.changeEnvironmentTexture(config.hdriFilePath[0]);
-        }else{
-            environmentController.changeSkyboxTexture(config.hdriFilePath[1]);
-            environmentController.changeEnvironmentTexture(config.hdriFilePath[1]);
-        }
-    });
-    viewController.AddEventOnIsCheckBox2Changed((on)=> {
+    viewController.AddEventOnIsCheckBoxChanged((on)=> {
         if(on){
             environmentController.changeModeToSkybox()
         }else{
             environmentController.changeModeToSolidColor();
         }
     });
+
+    for (let i = 0; i < config.hdriInfo.length; i++) {
+        viewController.AddRadio(config.hdriInfo[i].name);
+        viewController.radioButtons[i].onIsCheckedChangedObservable.add((state)=>{
+            if(state){
+                environmentController.changeSkyboxTexture(config.hdriInfo[i].path);
+                environmentController.changeEnvironmentTexture(config.hdriInfo[i].path);
+            }
+        });
+    }
 
     //FIXME:
     scene.onPointerMove  = function (event, pickResult){
@@ -89,7 +102,7 @@ const createScene = async function () {
     return scene;
 }
 const scene = await createScene(); //Call the createScene function
-scene.debugLayer.show();
+//scene.debugLayer.show();
 engine.runRenderLoop(function () {
     scene.render();
 });
