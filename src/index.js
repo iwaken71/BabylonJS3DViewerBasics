@@ -1,9 +1,9 @@
 import * as BABYLON from 'babylonjs';
 import {Engine,Scene,ArcRotateCamera,Vector3,SceneLoader,ExecuteCodeAction,ActionManager,MeshBuilder,StandardMaterial,Color3,DefaultRenderingPipeline,Scalar,Texture,CubeTexture} from 'babylonjs';
-import * as GUI from 'babylonjs-gui';
 import 'babylonjs-loaders';
 import {CameraRediusController,CameraTargetController,EnvironmentController} from './Utils.js';
-import {Observable} from "./Observable";
+import {UIController} from './UIController';
+
 (async ()=>{
 
 const canvas = document.getElementById("renderCanvas"); // Get the canvas element
@@ -12,70 +12,11 @@ const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 const config = {
     distCameraRadius: 0.15,
     assetsRootPath: "./assets/",
-    defaultAssetName: "chair.glb",
+    defaultAssetName: "vase.glb",
     hdriFilePath: [
         "./assets/hdri.env",
         "./assets/environment.env"
     ]
-}
-
-
-class ViewController {
-    onCheck1;
-    onCheck2;
-    constructor(){
-        this.onCheck1 = new Observable();
-        this.onCheck2 = new Observable();
-    }
-
-
-    addUI(scene){
-        console.log( this.onCheck1 );
-        var advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-        var panel = new GUI.StackPanel();
-        panel.width = "200px";
-        panel.isVertical = true;
-        panel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-        panel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-        panel.top = 100;
-        advancedTexture.addControl(panel);
-    
-        
-        var picker = new GUI.ColorPicker();
-        picker.value = scene.clearColor;
-        picker.height = "150px";
-        picker.width = "150px";
-        picker.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-        picker.onValueChangedObservable.add(function(value) { // value is a color3
-            scene.clearColor = value;
-        });
-    
-        var checkbox = new GUI.Checkbox();
-        checkbox.width = "20px";
-        checkbox.height = "20px";
-        checkbox.isChecked = true;
-        checkbox.color = "green";
-        checkbox.onIsCheckedChangedObservable.add(function(value) {
-           this.onCheck1.notify(value);
-            // observable.notify(value);
-           // check(value);
-        });
-        var checkbox2 = new GUI.Checkbox();
-        checkbox2.width = "20px";
-        checkbox2.height = "20px";
-        checkbox2.isChecked = true;
-        checkbox2.color = "green";
-        checkbox2.onIsCheckedChangedObservable.add(function(value) {
-           this.onCheck2.notify(value);
-            // observable.notify(value);
-            //check2(value);
-        });
-        panel.addControl(checkbox);
-        panel.addControl(checkbox2);
-    
-        panel.addControl(picker);     
-    } 
-    
 }
 
 // Add your code here matching the playground format
@@ -85,7 +26,7 @@ const createScene = async function () {
     let cameraRediusController = new CameraRediusController();
     let cameraTargetController = new CameraTargetController();
     let environmentController = new EnvironmentController(scene);
-    let viewController = new ViewController();
+    let viewController = new UIController();
     let pickedPoint; //詳細的にスコープを狭くしたい
     cameraRediusController.setDistCameraRadius(config.distCameraRadius);
     camera.attachControl(canvas, true);
@@ -110,9 +51,11 @@ const createScene = async function () {
         }
     });
 
-    viewController.addUI(scene);
-
-    viewController.onCheck1.subscribe((on)=> {
+    viewController.CreateUI(scene);
+    viewController.AddEventOnPickerValueChanged((color) => {
+        scene.clearColor = color;
+    });
+    viewController.AddEventOnIsCheckBox1Changed((on)=> {
         if(on){
             environmentController.changeSkyboxTexture(config.hdriFilePath[0]);
             environmentController.changeEnvironmentTexture(config.hdriFilePath[0]);
@@ -121,16 +64,7 @@ const createScene = async function () {
             environmentController.changeEnvironmentTexture(config.hdriFilePath[1]);
         }
     });
-    // viewController.onCheck1 = (on)=> {
-    //     if(on){
-    //         environmentController.changeSkyboxTexture(config.hdriFilePath[0]);
-    //         environmentController.changeEnvironmentTexture(config.hdriFilePath[0]);
-    //     }else{
-    //         environmentController.changeSkyboxTexture(config.hdriFilePath[1]);
-    //         environmentController.changeEnvironmentTexture(config.hdriFilePath[1]);
-    //     }
-    // }
-    viewController.onCheck2.subscribe((on)=> {
+    viewController.AddEventOnIsCheckBox2Changed((on)=> {
         if(on){
             environmentController.changeModeToSkybox()
         }else{
@@ -155,7 +89,7 @@ const createScene = async function () {
     return scene;
 }
 const scene = await createScene(); //Call the createScene function
-//scene.debugLayer.show();
+scene.debugLayer.show();
 engine.runRenderLoop(function () {
     scene.render();
 });
@@ -191,8 +125,4 @@ function setUpCameraSetting(scene){
     camera.wheelDeltaPercentage = 0.01;
     return camera;
 }
-
-
-
-
 })()
