@@ -10,12 +10,12 @@ const canvas = document.getElementById("renderCanvas"); // Get the canvas elemen
 const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 
 const config = {
-    showDebugUI: true,
+    showDebugUI: false,
     distCameraRadius: 1,
     radiusSpeed: 2.0,
     targetSpeed: 2.0,
     assetsRootPath: "https://raw.githubusercontent.com/iwaken71/BabylonJS3DViewerBasics/master/public/assets/",
-    defaultAssetName: "vase1k.glb",
+    defaultAssetName: "chair.glb",
     hdriInfo: [
         {
             name : "HDRI1",
