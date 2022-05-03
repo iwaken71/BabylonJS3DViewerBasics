@@ -10,11 +10,12 @@ const canvas = document.getElementById("renderCanvas"); // Get the canvas elemen
 const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 
 const config = {
+    showDebugUI: true,
     distCameraRadius: 1,
     radiusSpeed: 2.0,
     targetSpeed: 2.0,
     assetsRootPath: "https://raw.githubusercontent.com/iwaken71/BabylonJS3DViewerBasics/master/public/assets/",
-    defaultAssetName: "vase.glb",
+    defaultAssetName: "vase1k.glb",
     hdriInfo: [
         {
             name : "HDRI1",
@@ -102,7 +103,10 @@ const createScene = async function () {
     return scene;
 }
 const scene = await createScene(); //Call the createScene function
-//scene.debugLayer.show();
+
+if(config.showDebugUI){
+    scene.debugLayer.show();
+}
 engine.runRenderLoop(function () {
     scene.render();
 });
