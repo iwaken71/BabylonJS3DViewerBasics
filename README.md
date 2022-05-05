@@ -1,12 +1,17 @@
 # 環境
 
+|name|version|
+|---|---|
+|Node.js|v16.14.0|
+|babylonjs|5.5.5|
+
 # 準備
 
 ```
 git clone git@github.com:iwaken71/BabylonJS3DViewerBasics.git
 cd BabylonJS3DViewerBasics
 ```
-
+パッケージインストール
 ```
 npm install
 ```
