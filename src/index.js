@@ -11,7 +11,7 @@ const engine = new Engine(canvas, true); // Generate the BABYLON 3D engine
 
 const config = {
     showDebugUI: false,
-    distCameraRadius: 1,
+    distCameraRadius: 0.3,
     radiusSpeed: 2.0,
     targetSpeed: 2.0,
     assetsRootPath: "./assets/",
@@ -64,27 +64,27 @@ const createScene = async function () {
         }
     });
 
-    viewController.CreateUI(scene);
-    viewController.AddEventOnPickerValueChanged((color) => {
-        scene.clearColor = color;
-    });
-    viewController.AddEventOnIsCheckBoxChanged((on)=> {
-        if(on){
-            environmentController.changeModeToSkybox()
-        }else{
-            environmentController.changeModeToSolidColor();
-        }
-    });
+    // viewController.CreateUI(scene);
+    // viewController.AddEventOnPickerValueChanged((color) => {
+    //     scene.clearColor = color;
+    // });
+    // viewController.AddEventOnIsCheckBoxChanged((on)=> {
+    //     if(on){
+    //         environmentController.changeModeToSkybox()
+    //     }else{
+    //         environmentController.changeModeToSolidColor();
+    //     }
+    // });
 
-    for (let i = 0; i < config.hdriInfo.length; i++) {
-        viewController.AddRadio(config.hdriInfo[i].name);
-        viewController.radioButtons[i].onIsCheckedChangedObservable.add((state)=>{
-            if(state){
-                environmentController.changeSkyboxTexture(config.hdriInfo[i].path);
-                environmentController.changeEnvironmentTexture(config.hdriInfo[i].path);
-            }
-        });
-    }
+    // for (let i = 0; i < config.hdriInfo.length; i++) {
+    //     viewController.AddRadio(config.hdriInfo[i].name);
+    //     viewController.radioButtons[i].onIsCheckedChangedObservable.add((state)=>{
+    //         if(state){
+    //             environmentController.changeSkyboxTexture(config.hdriInfo[i].path);
+    //             environmentController.changeEnvironmentTexture(config.hdriInfo[i].path);
+    //         }
+    //     });
+    // }
 
     //FIXME:
     scene.onPointerMove  = function (event, pickResult){
