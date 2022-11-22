@@ -14,8 +14,8 @@ const config = {
     distCameraRadius: 1,
     radiusSpeed: 2.0,
     targetSpeed: 2.0,
-    assetsRootPath: "https://raw.githubusercontent.com/iwaken71/BabylonJS3DViewerBasics/master/public/assets/",
-    defaultAssetName: "vase2k.glb",
+    assetsRootPath: "./assets/",
+    defaultAssetName: "aguro.glb",
     hdriInfo: [
         {
             name : "HDRI1",
