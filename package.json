@@ -17,6 +17,7 @@
     "@types/copy-webpack-plugin": "^10.1.0",
     "babel-loader": "^8.2.5",
     "copy-webpack-plugin": "^10.2.4",
+    "spectorjs": "^0.9.27",
     "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.8.1"
